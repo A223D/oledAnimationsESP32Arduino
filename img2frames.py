@@ -5,7 +5,7 @@ buffer = []
 WIDTH = 128
 HEIGHT = 64
 
-fileName = "./monster.gif"
+fileName = "./fingerprint.gif"
 
 outputString = "#include \""
 
