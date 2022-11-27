@@ -1,12 +1,18 @@
 from PIL import Image
-import os
-
+from PIL import GifImagePlugin
 buffer = []
 
 WIDTH = 128
 HEIGHT = 64
 
-outputString = "#include \"aniBuf.h\"\n\nconst unsigned char bufferAnimation["
+fileName = "./monster.gif"
+
+outputString = "#include \""
+
+outputString += fileName[2:-3]+"h"
+
+outputString += "\"\n\nconst unsigned char bufferAnimation["
+
 
 def drawPixel(x, y, colour):
     global buffer
@@ -22,21 +28,25 @@ def drawPixel(x, y, colour):
     buffer[byteNum] = actualByte
 
 
-files = os.listdir("./frames")
+imageObject = Image.open(fileName)
 
-outputString += str(len(files))
+print(imageObject.is_animated)
+print(imageObject.n_frames)
+
+outputString += str(imageObject.n_frames)
+
 
 outputString += "][1024]={\n"
 
-for file in files:
+for frameNum in range(0, imageObject.n_frames):
     outputString += "{"
     buffer = []
     for i in range(0, 1024):
         buffer.append(0)
-    im = Image.open(os.path.join("./frames/", file))
-    im = im.convert('RGBA')
+    imageObject.seek(frameNum)
+    im = imageObject.convert('RGBA')
+    # im.show()
     px = im.load()
-    pix = list(im.getdata())
 
     for i in range(0, 64):
         for j in range(0, 64):
@@ -55,6 +65,16 @@ outputString = outputString[:-1]  # remove comma from last one
 
 outputString += "\n};"
 
-f = open("./aniBuf.c", "w")
+f = open(fileName[:-3]+"c", "w")
 f.write(outputString)
 f.close()
+
+
+hFileContent = "extern const unsigned char bufferAnimation ["
+hFileContent += str(imageObject.n_frames)
+hFileContent+="][1024];"
+
+f=open(fileName[:-3]+"h", "w")
+f.write(hFileContent)
+f.close()
+
