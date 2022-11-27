@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include "fingerprint.h"
+#include "alarm.h"
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -19,7 +19,7 @@ void setup() {
 }
 
 void loop() {
-  for (int i = 0; i < 60; i++) {
+  for (int i = 0; i < 41; i++) {
     display.clearDisplay();
     display.drawBitmap(0, 0, bufferAnimation[i], 128, 64, 1);
     display.display();

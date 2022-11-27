@@ -1,0 +1,1 @@
+extern const unsigned char bufferAnimation [41][1024];

@@ -1,11 +1,11 @@
 from PIL import Image
-from PIL import GifImagePlugin
+
 buffer = []
 
 WIDTH = 128
 HEIGHT = 64
 
-fileName = "./fingerprint.gif"
+fileName = "./alarm.gif"
 
 outputString = "#include \""
 
