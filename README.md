@@ -4,12 +4,15 @@
 Examples taken from [lordicon.com](lordicon.com)
 
 ![Alarm Clock](https://raw.githubusercontent.com/A223D/oledAnimationsESP32Arduino/main/examples/myAlarm.gif)
-![Book](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myBook.gif)![Confetti](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myConfetti.gif)
+![Book](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myBook.gif)
+![Confetti](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myConfetti.gif)
 ![Confetti](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myFingerprint.gif)
-## Important Note
+## Important Notes
 Due to the way the Arduino core and the Adafruit libraries work, all the animations will be slightly slower than their original counterparts. A way around this is speeding up the GIF using online utilities like [ezgif.com](https://ezgif.com/).
 
 To make GIF run faster/at their original speed, [visit my other project on OLED animations using ESP-IDF](https://github.com/A223D/oledAnimationsESP-IDF).
+
+Make sure not to edit any files open in the Arduino IDE outside of the IDE. This causes many issues. Always make sure to close Arduino IDE when running the Python script. Restarting the Arduino IDE generally fixes any issues arising from editing files externally. 
 
 ## Introduction & Requirements
 This project details how to create animations on OLED screens like SSD1306/SSD1315 etc. This project uses Adafruit's GFX libraries to abstract away the low-level display-specific processes as much as possible.
@@ -29,17 +32,18 @@ The requirements for this project are:
 	* You must know the I2C address of your screen. If it is unknown, use the `WireScan`	example sketch to find it. `WireScan` can be found in File menu in Examples->Wire (under `Examples for the ESP32 Dev Module`). The default I2C pins for the ESP32 are:
 	
 
-	| Description   | Pin|
+	| Description  | Pin|
 	| :-----------: | :-----------: |
-	|SDA   					|    21    |
-	| SCL   				| 22        |
+	|SDA  					|  21  |
+	| SCL  				| 22    |
 
 > Warning: **Make sure to use 3.3v for I2C**
 * A standard Python installation with Python Imaging Library installed
 	* Can be done by executing the following command in your terminal equivalent: `pip3 install pillow`
+* [Basic understanding of linking files in C and C++](https://www.cs.swarthmore.edu/~newhall/unixhelp/howto_C_libraries.html).
 
 ## Project Goals & Architecture
-We will be
+We will be:
 1. Procuring gif files.
 2. Splitting and saving frames as 2D arrays with Python.
 3. Linking the file to our main sketch
@@ -53,7 +57,7 @@ We will be
 3. Run the `img2frames.py` script to create the new header file and file content all the frames as 2D arrays.
 > Make sure there are no .c or .h files apart from the ones just created.
 4. Open up the Arduino IDE, and change the 4rd `#include` directive to the .h file just created.
-5. Running the Python script also outputs the number of frames in the GIF. Put this number in the condition part of the `for` loop in the Arduino sketch. If you  cannot find this number, it is also present in the .h file, beside 1024. 
+5. Running the Python script also outputs the number of frames in the GIF. Put this number in the condition part of the `for` loop in the Arduino sketch. If you cannot find this number, it is also present in the .h file, beside 1024. 
 6. Then you upload the sketch and reset the micro-controller if needed. 
 
 ## Required Theory
@@ -122,7 +126,7 @@ After that, we open the gif file, check if it is animated, and print the number 
 
 The next part of the script is as follows:
 ```python
-for  frameNum  in  range(0, imageObject.n_frames):
+for frameNum in range(0, imageObject.n_frames):
 	outputString += "{"
 	buffer = []
 	for i in range(0, 1024):
@@ -131,13 +135,13 @@ for  frameNum  in  range(0, imageObject.n_frames):
 	im = imageObject.convert('RGBA')
 	# im.show()
 	px = im.load()
-	for  i  in  range(0, 64):
-		for  j  in  range(0, 64):
+	for i in range(0, 64):
+		for j in range(0, 64):
 		#print("Orig ", str(i), " ", str(j))
-			if (px[i, j][0] < 250  and  px[i, j][1] < 250  and  px[i, j][2] < 250):
+			if (px[i, j][0] < 250 and px[i, j][1] < 250 and px[i, j][2] < 250):
 				# ADJUST PARAMETERS BELOW FOR X AND Y OFFSET
 				drawPixel(i + 32, j + 0, 1)
-	for  i  in  range(0, 1024):
+	for i in range(0, 1024):
 		outputString += str(buffer[i])
 		if (i != 1023):
 			outputString += ", "
@@ -159,4 +163,96 @@ f.write(hFileContent)
 f.close()
 ```
 
+In this part of the script, we run a `for` loop to go through each frame of the gif. The buffer for the frame is first emptied, and then filled with zeroes(representing a blank screen). We then take the frame, convert it to RGBA format for easier pixel access, loop through each pixel in the frame using 2 nested `for` loops. 
 
+Each pixel is tested to be darker than RGB(250, 250, 250), and if it is, it is placed in the buffer using the `drawPixel` function. Since the gif frames are 64x64, and my screen is 128x64, I decided to offset the frame by 32 pixels in the x-direction, so that my frame appears in the middle of the screen, instead of the left side.
+
+Once the `buffer` list is populated, we convert convert it into a string, and append it with appropriately places brackets into our C-style array, `outputString`. Once this is completed, we write `outputString` to a .c file with the same name as the .gif file, and start preparing a .h file of the same name, which will be linked in our main sketch. 
+
+## Linking the file to our main sketch (incl. .c and .h Files Explanation)
+
+Our .c file will look something like this:
+```c
+#include "gifName.h"
+
+const unsigned char bufferAnimation[<number of frames>][1024]={
+
+{0, 0, 0 ... rest of the frame ... 0, 0, 0},
+{0, 0, 0 ... rest of the frame ... 0, 0, 0},
+{0, 0, 0 ... rest of the frame ... 0, 0, 0},
+{0, 0, 0 ... rest of the frame ... 0, 0, 0},
+... goes on
+
+};
+```
+The first line links this file to the .h we mentioned above, which allows this huge 2D array to placed in a separate file. This is explained below. We used `const` to place this array in the flash memory, since it is too big for RAM. 
+
+We used `unsigned char` to make sure we don't run into any [Two's complement](https://en.wikipedia.org/wiki/Two%27s_complement) issues in C. There are as many 1D arrays as there are frames, as each 1D array holds the series of bits(cleared or set) representing pixels from the top left corner of the screen. 
+
+Our .h file will look something like this:
+```c
+extern const unsigned char bufferAnimation[41][1024];
+```
+We use `extern` keyword to extend the visibility of our 2D array. What this means is that by linking this .h file in our main sketch, we will be able to access the bufferAnimation array in our main sketch, even though it is defined in the .c file. 
+
+`const` and `unsigned char` have already been explained above. 
+
+## Displaying these Frames (incl. Main Sketch Explanation)
+
+Our main sketch is very simple and looks like this:
+```c
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include "gifName.h"
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void setup() {
+
+	Serial.begin(9600);
+	if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+		Serial.println(F("SSD1306 allocation failed"));
+		for (;;); // Don't proceed, loop forever
+	}
+}
+
+void loop() {
+	for (int i = 0; i < <number of frames>; i++) {
+		display.clearDisplay();
+		display.drawBitmap(0, 0, bufferAnimation[i], 128, 64, 1);
+		display.display();
+	}
+}
+```
+
+We start by including Adafruit GFX and display-specific libraries, along with the Wire library, which is required by the Adafruit libraries to access I2C functions. You also must include the relevant .h file generated by the Python script at the top. We create some `#define` directives for our screen width and height, I2C address, and OLED Reset, which will generally be -1, if you are using a commonly available screen. 
+
+We create an object called `display` on which we can call functions to control our screen. It requires the I2C address of the display, and how we plan to generate display voltage. In most cases, we can provide `SSD1306_SWITCHCAPVCC` to generate it from our 3.3V VCC line. We use the `begin` function on the `display` object to initialize the screen. 
+
+Make sure that the only tabs open in the IDE are that of the animation you want to show. This has to do with linking in the compiler. The Arduino IDE will probably add the .h file you include in your main sketch along with it's corresponding .c file, but will probably not remove any previous .c or .h files from previous animation. What happens is here is that it tries to link and compile all files which have tabs open. If there are multiple .h or .c files from previous animations, we will run into a compilation error, as the Python script calls each 2D array `bufferAnimation`. In other words, `bufferAnimation` will have conflicting declarations in multiple files. 
+
+To avoid this error, make sure to close any tabs which are not relevant to the animation you are trying to show by opening the drop-down menu under the Serial monitor button, and clicking `Delete` when the irrelevant tab selected. 
+
+![Delete Menu](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/deleteMenu.png)
+
+If the intention is to store and display multiple animations, make sure that you edit the name of each animation's 2D array so that they are different(for e.g. `secondBufferAnimation`) in the .c, .h, and main sketch files, as the Python script will always result in a 2D array called `bufferAnimation`. 
+
+For one animation with files called `alarm.h`and `alarm.c`, the IDE should look something like this:
+
+![Correct IDE Tabs](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/IDETabs.png)
+
+We must then edit the number of frames in the animation manually. This was outputted in the console when the Python script ran, and can also be found in the .h or .c file of the animation. 
+
+In the loop, we clear the buffer in the screen of any pixels set from the previously display frame, draw our current frame to the buffer in the screen, and then trigger the display to show what's in the buffer on the panel. 
+
+>Note that this buffer is physically present in the screen, and is different from `buffer` in Python or `bufferAnimation` in C. 
+
+Compiling and uploading this code will transfer everything to the ESP32 and start the animation on the screen if everything is connected properly. 
+
+In some cases, a physical micro-controller reset might be needed(by pressing the Reset/EN button on the ESP32) if previous program execution was interrupted at a bad time. 
