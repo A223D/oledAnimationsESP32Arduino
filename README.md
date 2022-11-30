@@ -4,9 +4,7 @@
 Examples taken from [lordicon.com](lordicon.com)
 
 ![Alarm Clock](https://raw.githubusercontent.com/A223D/oledAnimationsESP32Arduino/main/examples/myAlarm.gif)
-![Book](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myBook.gif)
-![Confetti](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myConfetti.gif)
-![Confetti](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myFingerprint.gif)
+![Book](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myBook.gif)![Confetti](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myConfetti.gif)![Confetti](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/myFingerprint.gif)
 ## Important Notes
 Due to the way the Arduino core and the Adafruit libraries work, all the animations will be slightly slower than their original counterparts. A way around this is speeding up the GIF using online utilities like [ezgif.com](https://ezgif.com/).
 
@@ -44,16 +42,16 @@ The requirements for this project are:
 
 ## Project Goals & Architecture
 We will be:
-1. Procuring gif files.
+1. Procuring .gif files.
 2. Splitting and saving frames as 2D arrays with Python.
 3. Linking the file to our main sketch
 4. Displaying these frames on the screen using Adafruit library functions.
 
 ## How to Use this Project
 
-1. Download this repository, and place any new gif files in the same directory. 
+1. Download this repository, and place any new .gif files in the same directory. 
 > Make sure the Arduino IDE is closed, as it creates issues if a file is edited outside it. 
-2. You will have to change the target gif in the `img2frames.py` script, and delete any previous `.c` or `.h` file, otherwise Arduino experiences issues. 
+2. You will have to change the target .gif in the `img2frames.py` script, and delete any previous `.c` or `.h` file, otherwise Arduino experiences issues. 
 3. Run the `img2frames.py` script to create the new header file and file content all the frames as 2D arrays.
 > Make sure there are no .c or .h files apart from the ones just created.
 4. Open up the Arduino IDE, and change the 4rd `#include` directive to the .h file just created.
@@ -83,7 +81,7 @@ For the sake of this tutorial, we will be procuring animation from Lordicon.com,
 
 ## Splitting and Saving Frames as C-style 2D Arrays
 
-In this section, we will use a Python script to split the frames of our gif file and save them as 2 C-style 2D Arrays. 
+In this section, we will use a Python script to split the frames of our .gif file and save them as 2 C-style 2D Arrays. 
 
 The first part of the script:
 ```python
@@ -118,11 +116,11 @@ print(imageObject.n_frames)
 outputString += str(imageObject.n_frames)
 outputString += "][1024]={\n"
 ```
-This part initialize the buffer for a frame, declares variable for the width and height of the screen, declares the target gif file, and begins the .c file that will store all the frames. 
+This part initialize the buffer for a frame, declares variable for the width and height of the screen, declares the target .gif file, and begins the .c file that will store all the frames. 
 
 We also create the `drawPixel` function, which takes 0-indexed coordinates, and a colour(1 or 0), and sets or clears a bit accordingly. This is used to create a frame in the `buffer` list, which consists of 1024 bytes. We first find the byte number and bit number in the byte. Then that byte is read from the `buffer` list and the specific bit is cleared or set. Then the modified byte is places back into `buffer`. This function is used later on. 
 
-After that, we open the gif file, check if it is animated, and print the number of frames. We add that to the output frame file, and start the 2D array.
+After that, we open the .gif file, check if it is animated, and print the number of frames. We add that to the output frame file, and start the 2D array.
 
 The next part of the script is as follows:
 ```python
@@ -163,9 +161,9 @@ f.write(hFileContent)
 f.close()
 ```
 
-In this part of the script, we run a `for` loop to go through each frame of the gif. The buffer for the frame is first emptied, and then filled with zeroes(representing a blank screen). We then take the frame, convert it to RGBA format for easier pixel access, loop through each pixel in the frame using 2 nested `for` loops. 
+In this part of the script, we run a `for` loop to go through each frame of the .gif. The buffer for the frame is first emptied, and then filled with zeroes(representing a blank screen). We then take the frame, convert it to RGBA format for easier pixel access, loop through each pixel in the frame using 2 nested `for` loops. 
 
-Each pixel is tested to be darker than RGB(250, 250, 250), and if it is, it is placed in the buffer using the `drawPixel` function. Since the gif frames are 64x64, and my screen is 128x64, I decided to offset the frame by 32 pixels in the x-direction, so that my frame appears in the middle of the screen, instead of the left side.
+Each pixel is tested to be darker than RGB(250, 250, 250), and if it is, it is placed in the buffer using the `drawPixel` function. Since the .gif frames are 64x64, and my screen is 128x64, I decided to offset the frame by 32 pixels in the x-direction, so that my frame appears in the middle of the screen, instead of the left side.
 
 Once the `buffer` list is populated, we convert convert it into a string, and append it with appropriately places brackets into our C-style array, `outputString`. Once this is completed, we write `outputString` to a .c file with the same name as the .gif file, and start preparing a .h file of the same name, which will be linked in our main sketch. 
 
@@ -214,7 +212,6 @@ Our main sketch is very simple and looks like this:
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 void setup() {
-
 	Serial.begin(9600);
 	if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
 		Serial.println(F("SSD1306 allocation failed"));
@@ -240,7 +237,6 @@ Make sure that the only tabs open in the IDE are that of the animation you want 
 To avoid this error, make sure to close any tabs which are not relevant to the animation you are trying to show by opening the drop-down menu under the Serial monitor button, and clicking `Delete` when the irrelevant tab selected. 
 
 ![Delete Menu](https://github.com/A223D/oledAnimationsESP32Arduino/raw/main/examples/deleteMenu.png)
-
 If the intention is to store and display multiple animations, make sure that you edit the name of each animation's 2D array so that they are different(for e.g. `secondBufferAnimation`) in the .c, .h, and main sketch files, as the Python script will always result in a 2D array called `bufferAnimation`. 
 
 For one animation with files called `alarm.h`and `alarm.c`, the IDE should look something like this:
